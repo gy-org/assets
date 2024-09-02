@@ -1,0 +1,14 @@
+apiVersion: backstage.io/v1alpha1
+kind: Component
+metadata:
+  name: assets
+  annotations:
+    github.com/project-slug: gy-org/assets
+    backstage.io/kubernetes-label-selector: 'app=assets'
+  description: assets created
+spec:
+  type: service
+  owner: user:guest
+  lifecycle: experimental
+  # dependsOn:
+  #   - resource:crossplane-eks-demo-05
