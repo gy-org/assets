@@ -1,19 +1,106 @@
+---
+# Source: assets/templates/configmap.yml
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: ${APP_NAME}
+data:
+  PORT: '8080'
+---
+# Source: assets/templates/service.yaml
+apiVersion: v1
+kind: Service
+metadata:
+  name: ${APP_NAME}
+  labels:
+    helm.sh/chart: assets-0.0.1
+    app.kubernetes.io/name: assets
+    app.kubernetes.io/instance: assets
+    app.kubernetes.io/component: service
+    app.kuberneres.io/owner: retail-store-sample
+    app.kubernetes.io/managed-by: Helm
+spec:
+  type: ClusterIP
+  ports:
+    - port: 80
+      targetPort: http
+      protocol: TCP
+      name: http
+  selector:
+    app.kubernetes.io/name: assets
+    app.kubernetes.io/instance: assets
+    app.kubernetes.io/component: service
+    app.kuberneres.io/owner: retail-store-sample
+---
+# Source: assets/templates/deployment.yaml
 apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: ${APP_NAME}
+  labels:
+    helm.sh/chart: assets-0.0.1
+    app.kubernetes.io/name: assets
+    app.kubernetes.io/instance: assets
+    app.kubernetes.io/component: service
+    app.kuberneres.io/owner: retail-store-sample
+    app.kubernetes.io/managed-by: Helm
 spec:
   replicas: 1
+  strategy:
+    rollingUpdate:
+      maxUnavailable: 1
+    type: RollingUpdate
   selector:
     matchLabels:
       app: ${APP_NAME}
+      app.kubernetes.io/name: assets
+      app.kubernetes.io/instance: assets
+      app.kubernetes.io/component: service
+      app.kuberneres.io/owner: retail-store-sample
   template:
     metadata:
       labels:
         app: ${APP_NAME}
+        app.kubernetes.io/name: assets
+        app.kubernetes.io/instance: assets
+        app.kubernetes.io/component: service
+        app.kuberneres.io/owner: retail-store-sample
     spec:
+      serviceAccountName: ${APP_NAME}
+      securityContext:
+        {}
       containers:
-      - name: app
-        image: "${IMAGE}"
-        ports:
-        - containerPort: 80
+        - name: assets
+          envFrom:
+            - configMapRef:
+                name: assets
+          securityContext:
+            capabilities:
+              drop:
+              - ALL
+            readOnlyRootFilesystem: false
+          image: "public.ecr.aws/aws-containers/retail-store-sample-assets:0.8.1"
+          imagePullPolicy: IfNotPresent
+          ports:
+            - name: http
+              containerPort: 8080
+              protocol: TCP
+          livenessProbe:
+            httpGet:
+              path: /health.html
+              port: 8080
+            initialDelaySeconds: 30
+            periodSeconds: 3
+          resources:
+            limits:
+              memory: 128Mi
+            requests:
+              cpu: 128m
+              memory: 128Mi
+          volumeMounts:
+            - mountPath: /tmp
+              name: tmp-volume
+      volumes:
+        - name: tmp-volume
+          emptyDir:
+            medium: Memory
