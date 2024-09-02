@@ -1,4 +1,17 @@
 ---
+# Source: assets/templates/serviceaccount.yaml
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: ${APP_NAME}
+  labels:
+    helm.sh/chart: assets-0.0.1
+    app.kubernetes.io/name: assets
+    app.kubernetes.io/instance: assets
+    app.kubernetes.io/component: service
+    app.kuberneres.io/owner: retail-store-sample
+    app.kubernetes.io/managed-by: Helm
+---
 # Source: assets/templates/configmap.yml
 apiVersion: v1
 kind: ConfigMap
